@@ -203,11 +203,14 @@ func (c *Client) Throttle(hourlyTokens, burst int) {
 //   An endpoint is used when all preceding endpoints have returned a conn err.
 //   This should be used when using the ghproxy GitHub proxy cache to allow
 //   this client to bypass the cache if it is temporarily unavailable.
-func NewClient(getToken func() []byte, bases ...string) *Client {
+// 'graphqlEndpoint' is the Github GraphQL API (v4) endpoint to use.
+//   The only difference between githubql.NewEnterpriseClient and
+//   githubql.NewClient is the capability to specify an endpoint.
+func NewClient(getToken func() []byte, graphqlEndpoint string, bases ...string) *Client {
 	return &Client{
 		logger: logrus.WithField("client", "github"),
 		time:   &standardTime{},
-		gqlc: githubql.NewClient(&http.Client{
+		gqlc: githubql.NewEnterpriseClient(graphqlEndpoint, &http.Client{
 			Timeout:   maxRequestTime,
 			Transport: &oauth2.Transport{Source: newReloadingTokenSource(getToken)},
 		}),
@@ -226,11 +229,11 @@ func NewClient(getToken func() []byte, bases ...string) *Client {
 //   An endpoint is used when all preceding endpoints have returned a conn err.
 //   This should be used when using the ghproxy GitHub proxy cache to allow
 //   this client to bypass the cache if it is temporarily unavailable.
-func NewDryRunClient(getToken func() []byte, bases ...string) *Client {
+func NewDryRunClient(getToken func() []byte, graphqlEndpoint string, bases ...string) *Client {
 	return &Client{
 		logger: logrus.WithField("client", "github"),
 		time:   &standardTime{},
-		gqlc: githubql.NewClient(&http.Client{
+		gqlc: githubql.NewEnterpriseClient(graphqlEndpoint, &http.Client{
 			Timeout:   maxRequestTime,
 			Transport: &oauth2.Transport{Source: newReloadingTokenSource(getToken)},
 		}),

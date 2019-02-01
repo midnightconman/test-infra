@@ -30,10 +30,11 @@ import (
 
 // GitHubOptions holds options for interacting with GitHub.
 type GitHubOptions struct {
-	endpoint            Strings
-	GitEndpoint         string
-	TokenPath           string
-	deprecatedTokenFile string
+	endpoint              Strings
+	GitEndpoint           string
+	githubGraphQLEndpoint string
+	TokenPath             string
+	deprecatedTokenFile   string
 }
 
 // AddFlags injects GitHub options into the given FlagSet.
@@ -52,6 +53,7 @@ func (o *GitHubOptions) addFlags(wantDefaultGithubTokenPath bool, fs *flag.FlagS
 	o.endpoint = NewStrings("https://api.github.com")
 	fs.Var(&o.endpoint, "github-endpoint", "GitHub's API endpoint (may differ for enterprise).")
 	fs.StringVar(&o.GitEndpoint, "git-endpoint", "https://github.com", "GitHub endpoint (may differ for enterprise).")
+	fs.StringVar(&o.githubGraphQLEndpoint, "github-graphql-endpoint", "https://api.github.com/graphql", "GitHub GraphQL API endpoint (may differ for enterprise).")
 	defaultGithubTokenPath := ""
 	if wantDefaultGithubTokenPath {
 		defaultGithubTokenPath = "/etc/github/oauth"
@@ -101,9 +103,9 @@ func (o *GitHubOptions) GitHubClient(secretAgent *secret.Agent, dryRun bool) (cl
 	}
 
 	if dryRun {
-		return github.NewDryRunClient(*generator, o.endpoint.Strings()...), nil
+		return github.NewDryRunClient(*generator, o.githubGraphQLEndpoint, o.endpoint.Strings()...), nil
 	}
-	return github.NewClient(*generator, o.endpoint.Strings()...), nil
+	return github.NewClient(*generator, o.githubGraphQLEndpoint, o.endpoint.Strings()...), nil
 }
 
 // GitClient returns a Git client.

@@ -456,7 +456,7 @@ func githubClient(tokenPath string, dry bool) (*github.Client, error) {
 	if dry {
 		return github.NewDryRunClient(gen, "https://api.github.com"), nil
 	}
-	return github.NewClient(gen, "https://api.github.com"), nil
+	return github.NewClient(gen, "https://api.github.com/graphql", "https://api.github.com"), nil
 }
 
 func applySecret(ctx, name, key, path string) error {

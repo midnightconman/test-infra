@@ -37,11 +37,12 @@ import (
 )
 
 const (
-	loginSession   = "github_login"
-	githubEndpoint = "https://api.github.com"
-	tokenSession   = "access-token-session"
-	tokenKey       = "access-token"
-	loginKey       = "login"
+	loginSession          = "github_login"
+	githubEndpoint        = "https://api.github.com"
+	githubGraphQLEndpoint = "https://api.github.com/graphql"
+	tokenSession          = "access-token-session"
+	tokenKey              = "access-token"
+	loginKey              = "login"
 )
 
 type githubClient interface {
@@ -239,7 +240,7 @@ func (da *DashboardAgent) HandlePrStatus(queryHandler PullRequestQueryHandler) h
 			}
 
 			// Construct query
-			ghc := github.NewClient(func() []byte { return []byte(token.AccessToken) }, githubEndpoint)
+			ghc := github.NewClient(func() []byte { return []byte(token.AccessToken) }, githubGraphQLEndpoint, githubEndpoint)
 			query := da.ConstructSearchQuery(login)
 			if err := r.ParseForm(); err == nil {
 				if q := r.Form.Get("query"); q != "" {
