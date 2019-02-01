@@ -207,7 +207,7 @@ func NewClient(getToken func() []byte, bases ...string) *Client {
 	return &Client{
 		logger: logrus.WithField("client", "github"),
 		time:   &standardTime{},
-		gqlc: githubql.NewClient(&http.Client{
+		gqlc: githubql.NewEnterpriseClient(bases[0], &http.Client{
 			Timeout:   maxRequestTime,
 			Transport: &oauth2.Transport{Source: newReloadingTokenSource(getToken)},
 		}),
@@ -230,7 +230,7 @@ func NewDryRunClient(getToken func() []byte, bases ...string) *Client {
 	return &Client{
 		logger: logrus.WithField("client", "github"),
 		time:   &standardTime{},
-		gqlc: githubql.NewClient(&http.Client{
+		gqlc: githubql.NewEnterpriseClient(bases[0], &http.Client{
 			Timeout:   maxRequestTime,
 			Transport: &oauth2.Transport{Source: newReloadingTokenSource(getToken)},
 		}),
