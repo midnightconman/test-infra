@@ -23,6 +23,7 @@ import (
 	"path/filepath"
 	"testing"
 
+	"k8s.io/test-infra/prow/git"
 	"k8s.io/test-infra/prow/git/localgit"
 )
 
@@ -131,5 +132,48 @@ func TestCheckoutPR(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(r.Dir, "wow")); err != nil {
 		t.Errorf("Didn't find file in PR after checking out: %v", err)
+	}
+}
+
+func TestNewClient(t *testing.T) {
+	gitURL := "https://github.mycorp.com"
+	t.Logf("Verifying client is created with correct base endpoint.")
+	a, err := git.NewClient(gitURL)
+	if err != nil {
+		t.Fatalf("Error creating new client: %+v", err)
+	}
+	if a.GetBase() != gitURL {
+		t.Errorf("NewClient base was different than expected: %v", err)
+	}
+}
+
+func TestGitRemote(t *testing.T) {
+	tests := []struct {
+		name     string
+		base     string
+		user     string
+		pass     string
+		repo     string
+		expected string
+		err      bool
+	}{
+		{
+			name:     "A valid remote url, with user, password, organization, and repository",
+			base:     "https://github.com",
+			user:     "user",
+			pass:     "pass",
+			repo:     "repo",
+			expected: "https://user:pass@github.com/user/repo",
+		},
+	}
+
+	for _, test := range tests {
+		testURL, err := git.GitRemote(test.base, test.user, test.pass, test.repo)
+		if err != nil {
+			t.Fatalf("Error creating git remote: %+v", err)
+		}
+		if test.expected != testURL.String() {
+			t.Errorf("git remote did not match expected remote: %v", err)
+		}
 	}
 }
