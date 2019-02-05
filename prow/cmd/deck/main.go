@@ -82,9 +82,10 @@ type options struct {
 	spyglass              bool
 	spyglassFilesLocation string
 	gcsCredentialsFile    string
+	prowflagutil.GitHubOptions
 }
 
-func (o *options) Validate() error {
+func (o options) Validate() error {
 	if o.buildCluster != "" {
 		logrus.Error("--build-cluster is deprecated, switch to --cluster by June 2019.")
 		o.kubernetes.InjectBuildCluster(o.buildCluster)
@@ -108,9 +109,9 @@ func (o *options) Validate() error {
 	return nil
 }
 
-func gatherOptions() options {
+func gatherOptions(fs *flag.FlagSet, args []string) (*options, error) {
 	o := options{}
-	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+	o.AddFlags(fs)
 	fs.StringVar(&o.configPath, "config-path", "/etc/config/config.yaml", "Path to config.yaml.")
 	fs.StringVar(&o.jobConfigPath, "job-config-path", "", "Path to prow job configs.")
 	fs.StringVar(&o.buildCluster, "build-cluster", "", "DEPRECATED. Use --cluster. Path to file containing a YAML-marshalled kube.Cluster object. If empty, uses the local cluster.")
@@ -131,7 +132,7 @@ func gatherOptions() options {
 	fs.StringVar(&o.gcsCredentialsFile, "gcs-credentials-file", "", "Path to the GCS credentials file")
 	o.kubernetes.AddFlags(fs)
 	fs.Parse(os.Args[1:])
-	return o
+	return &o, nil
 }
 
 func staticHandlerFromDir(dir string) http.Handler {
@@ -139,7 +140,10 @@ func staticHandlerFromDir(dir string) http.Handler {
 }
 
 func main() {
-	o := gatherOptions()
+	o, err := gatherOptions(flag.NewFlagSet(os.Args[0], flag.ExitOnError), os.Args[1:])
+	if err != nil {
+		logrus.Fatalf("Bad flags: %v", err)
+	}
 	if err := o.Validate(); err != nil {
 		logrus.Fatalf("Invalid options: %v", err)
 	}
@@ -163,14 +167,14 @@ func main() {
 	mux.Handle("/favicon.ico", gziphandler.GzipHandler(handleFavicon(o.staticFilesLocation, cfg)))
 
 	// Set up handlers for template pages.
-	mux.Handle("/pr", gziphandler.GzipHandler(handleSimpleTemplate(o, cfg, "pr.html", nil)))
-	mux.Handle("/command-help", gziphandler.GzipHandler(handleSimpleTemplate(o, cfg, "command-help.html", nil)))
+	mux.Handle("/pr", gziphandler.GzipHandler(handleSimpleTemplate(*o, cfg, "pr.html", nil)))
+	mux.Handle("/command-help", gziphandler.GzipHandler(handleSimpleTemplate(*o, cfg, "command-help.html", nil)))
 	mux.Handle("/plugin-help", http.RedirectHandler("/command-help", http.StatusMovedPermanently))
-	mux.Handle("/tide", gziphandler.GzipHandler(handleSimpleTemplate(o, cfg, "tide.html", nil)))
-	mux.Handle("/tide-history", gziphandler.GzipHandler(handleSimpleTemplate(o, cfg, "tide-history.html", nil)))
-	mux.Handle("/plugins", gziphandler.GzipHandler(handleSimpleTemplate(o, cfg, "plugins.html", nil)))
+	mux.Handle("/tide", gziphandler.GzipHandler(handleSimpleTemplate(*o, cfg, "tide.html", nil)))
+	mux.Handle("/tide-history", gziphandler.GzipHandler(handleSimpleTemplate(*o, cfg, "tide-history.html", nil)))
+	mux.Handle("/plugins", gziphandler.GzipHandler(handleSimpleTemplate(*o, cfg, "plugins.html", nil)))
 
-	indexHandler := handleSimpleTemplate(o, cfg, "index.html", struct{ SpyglassEnabled bool }{o.spyglass})
+	indexHandler := handleSimpleTemplate(*o, cfg, "index.html", struct{ SpyglassEnabled bool }{o.spyglass})
 
 	runLocal := o.pregeneratedData != ""
 
@@ -191,9 +195,9 @@ func main() {
 	})
 
 	if runLocal {
-		mux = localOnlyMain(cfg, o, mux)
+		mux = localOnlyMain(cfg, *o, mux)
 	} else {
-		mux = prodOnlyMain(cfg, o, mux)
+		mux = prodOnlyMain(cfg, *o, mux)
 	}
 
 	// setup done, actually start the server
