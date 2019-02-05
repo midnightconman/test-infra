@@ -108,6 +108,7 @@ func (c *Client) getCredentials() (string, string) {
 	return c.user, string(c.tokenGenerator())
 }
 
+// GetBase returns Client.base as a string
 func (c *Client) GetBase() string {
 	return c.base
 }
@@ -141,11 +142,10 @@ func (c *Client) Clone(repo string) (*Repo, error) {
 	base := c.base
 	user, pass := c.getCredentials()
 	if user != "" && pass != "" {
-		gitURL, err := url.Parse(c.base)
+		gitURL, err := Remote(c.base, user, pass)
 		if err != nil {
 			return nil, err
 		}
-		gitURL.User = url.UserPassword(user, pass)
 		base = gitURL.String()
 	}
 	cache := filepath.Join(c.dir, repo) + ".git"
@@ -297,9 +297,9 @@ func (r *Repo) Push(repo, branch string) error {
 	}
 	r.logger.Infof("Pushing to '%s/%s (branch: %s)'.", r.user, repo, branch)
 
-	remote, err := GitRemote(r.base, r.user, r.pass, repo)
+	remote, err := Remote(r.base, r.user, r.pass, r.user, repo)
 	if err != nil {
-		return fmt.Errorf("GitRemote error: %v", err)
+		return fmt.Errorf("Remote error: %v", err)
 	}
 
 	// We can't push without user and repo in remote path
@@ -334,14 +334,14 @@ func (r *Repo) Config(key, value string) error {
 	return nil
 }
 
-// GitRemote builds a remote url from user, pasword, and a slice of path items
-func GitRemote(base string, user string, pass string, repo string) (*url.URL, error) {
+// Remote builds a remote url from user, pasword, and a slice of path items
+func Remote(base string, user string, pass string, pathItems ...string) (*url.URL, error) {
 	newURL, err := url.Parse(base)
 	if err != nil {
 		return &url.URL{}, fmt.Errorf("Error while parsing base: %v", err)
 	}
 	newURL.User = url.UserPassword(user, pass)
-	newURL.Path = strings.Join([]string{user, repo}, "/")
+	newURL.Path = strings.Join(pathItems, "/")
 	return newURL, nil
 }
 
