@@ -338,7 +338,7 @@ func (r *Repo) Config(key, value string) error {
 func Remote(base string, user string, pass string, pathItems ...string) (*url.URL, error) {
 	newURL, err := url.Parse(base)
 	if err != nil {
-		return &url.URL{}, fmt.Errorf("Error while parsing base: %v", err)
+		return nil, fmt.Errorf("Error while parsing base: %v", err)
 	}
 	newURL.User = url.UserPassword(user, pass)
 	newURL.Path = strings.Join(pathItems, "/")
