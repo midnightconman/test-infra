@@ -147,28 +147,36 @@ func TestNewClient(t *testing.T) {
 	}
 }
 
-func TestGitRemote(t *testing.T) {
+func TestRemote(t *testing.T) {
 	tests := []struct {
-		name     string
-		base     string
-		user     string
-		pass     string
-		repo     string
-		expected string
-		err      bool
+		name      string
+		base      string
+		user      string
+		pass      string
+		pathItems string
+		expected  string
+		err       bool
 	}{
 		{
-			name:     "A valid remote url, with user, password, organization, and repository",
-			base:     "https://github.com",
-			user:     "user",
-			pass:     "pass",
-			repo:     "repo",
-			expected: "https://user:pass@github.com/user/repo",
+			name:      "A valid remote url, with user, and password, no path",
+			base:      "https://github.com",
+			user:      "user",
+			pass:      "pass",
+			pathItems: "",
+			expected:  "https://user:pass@github.com",
+		},
+		{
+			name:      "A valid remote url, with user, password, organization, and repository",
+			base:      "https://github.com",
+			user:      "user",
+			pass:      "pass",
+			pathItems: "user/repo",
+			expected:  "https://user:pass@github.com/user/repo",
 		},
 	}
 
 	for _, test := range tests {
-		testURL, err := git.GitRemote(test.base, test.user, test.pass, test.repo)
+		testURL, err := git.Remote(test.base, test.user, test.pass, test.pathItems)
 		if err != nil {
 			t.Fatalf("Error creating git remote: %+v", err)
 		}
