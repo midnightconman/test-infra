@@ -30,9 +30,9 @@ import (
 
 // GitHubOptions holds options for interacting with GitHub.
 type GitHubOptions struct {
-	endpoint              Strings
+	Endpoint              Strings
 	GitEndpoint           string
-	githubGraphQLEndpoint string
+	GithubGraphQLEndpoint string
 	TokenPath             string
 	deprecatedTokenFile   string
 }
@@ -50,10 +50,10 @@ func (o *GitHubOptions) AddFlagsWithoutDefaultGithubTokenPath(fs *flag.FlagSet) 
 }
 
 func (o *GitHubOptions) addFlags(wantDefaultGithubTokenPath bool, fs *flag.FlagSet) {
-	o.endpoint = NewStrings("https://api.github.com")
-	fs.Var(&o.endpoint, "github-endpoint", "GitHub's API endpoint (may differ for enterprise).")
+	o.Endpoint = NewStrings("https://api.github.com")
+	fs.Var(&o.Endpoint, "github-endpoint", "GitHub's API endpoint (may differ for enterprise).")
 	fs.StringVar(&o.GitEndpoint, "git-endpoint", "https://github.com", "GitHub endpoint (may differ for enterprise).")
-	fs.StringVar(&o.githubGraphQLEndpoint, "github-graphql-endpoint", "https://api.github.com/graphql", "GitHub GraphQL API endpoint (may differ for enterprise).")
+	fs.StringVar(&o.GithubGraphQLEndpoint, "github-graphql-endpoint", "https://api.github.com/graphql", "GitHub GraphQL API endpoint (may differ for enterprise).")
 	defaultGithubTokenPath := ""
 	if wantDefaultGithubTokenPath {
 		defaultGithubTokenPath = "/etc/github/oauth"
@@ -64,7 +64,7 @@ func (o *GitHubOptions) addFlags(wantDefaultGithubTokenPath bool, fs *flag.FlagS
 
 // Validate validates GitHub options.
 func (o *GitHubOptions) Validate(dryRun bool) error {
-	for _, uri := range o.endpoint.Strings() {
+	for _, uri := range o.Endpoint.Strings() {
 		if _, err := url.ParseRequestURI(uri); err != nil {
 			return fmt.Errorf("invalid -github-endpoint URI: %q", uri)
 		}
@@ -103,9 +103,9 @@ func (o *GitHubOptions) GitHubClient(secretAgent *secret.Agent, dryRun bool) (cl
 	}
 
 	if dryRun {
-		return github.NewDryRunClient(*generator, o.githubGraphQLEndpoint, o.endpoint.Strings()...), nil
+		return github.NewDryRunClient(*generator, o.GithubGraphQLEndpoint, o.Endpoint.Strings()...), nil
 	}
-	return github.NewClient(*generator, o.githubGraphQLEndpoint, o.endpoint.Strings()...), nil
+	return github.NewClient(*generator, o.GithubGraphQLEndpoint, o.Endpoint.Strings()...), nil
 }
 
 // GitClient returns a Git client.
