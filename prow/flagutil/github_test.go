@@ -62,7 +62,7 @@ func TestGithubOptions(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			o := GitHubOptions{
-				endpoint:    testCase.endpoints,
+				Endpoint:    testCase.endpoints,
 				GitEndpoint: testCase.gitEndpoint,
 				TokenPath:   testCase.tokenPath,
 			}

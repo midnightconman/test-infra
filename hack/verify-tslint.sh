@@ -1,6 +1,5 @@
 #!/usr/bin/env bash
-
-# Copyright 2016 The Kubernetes Authors.
+# Copyright 2019 The Kubernetes Authors.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -14,27 +13,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -o errexit
 set -o nounset
 set -o pipefail
 
-if [ -z "${PKG}" ]; then
-    echo "PKG must be set"
-    exit 1
-fi
-if [ -z "${ARCH}" ]; then
-    echo "ARCH must be set"
-    exit 1
-fi
-if [ -z "${VERSION}" ]; then
-    echo "VERSION must be set"
-    exit 1
+TESTINFRA_ROOT=$(git rev-parse --show-toplevel)
+bazel run //:tslint -- -p "${TESTINFRA_ROOT}"
+result=$?
+
+if [[ "${result}" -ne 0 ]]; then
+  echo "tslint failed. \`bazel run //:tslint -- -p \$PWD --fix\` might help."
 fi
 
-export CGO_ENABLED=0
-export GOARCH="${ARCH}"
-
-go install                                                         \
-    -installsuffix "static"                                        \
-    -ldflags "-X ${PKG}/pkg/version.VERSION=${VERSION}"            \
-    ./...
+exit "${result}"
