@@ -108,6 +108,10 @@ type ProwConfig struct {
 
 	// Pub/Sub Subscriptions that we want to listen to
 	PubSubSubscriptions PubsubSubscriptions `json:"pubsub_subscriptions,omitempty"`
+
+	// GitHubOptions allows users to control how prow application interact with
+	// git, github, and github API's.
+	GitHubOptions GitHubOptions `json:"github,omitempty"`
 }
 
 // OwnersDirBlacklist is used to configure which directories to ignore when
@@ -309,6 +313,13 @@ type Branding struct {
 
 // PubSubSubscriptions maps GCP projects to a list of Topics.
 type PubsubSubscriptions map[string][]string
+
+// GitHubOptions allows users to control how prow applications display GitHub website links.
+type GitHubOptions struct {
+	// LinkURL allows users to override the default GitHub link url for all plugins.
+	// If this option is not set, we use "https://github.com".
+	LinkURL string `json:"link_url,omitempty"`
+}
 
 // Load loads and parses the config at path.
 func Load(prowConfig, jobConfig string) (c *Config, err error) {
@@ -923,6 +934,13 @@ func parseProwConfig(c *Config) error {
 	}
 	if c.PodNamespace == "" {
 		c.PodNamespace = "default"
+	}
+
+	if c.GitHubOptions.LinkURL == "" {
+		c.GitHubOptions.LinkURL = "https://github.com"
+	}
+	if _, err := url.Parse(c.GitHubOptions.LinkURL); err != nil {
+		return fmt.Errorf("unable to parse github.link_url, might not be a valid url: %v", err)
 	}
 
 	if c.LogLevel == "" {
