@@ -98,7 +98,7 @@ func newTestReviewTime(t time.Time, user, body string, state github.ReviewState)
 	return r
 }
 
-func newFakeGithubClient(hasLabel, humanApproved bool, files []string, comments []github.IssueComment, reviews []github.Review) *fakegithub.FakeClient {
+func newFakeGitHubClient(hasLabel, humanApproved bool, files []string, comments []github.IssueComment, reviews []github.Review) *fakegithub.FakeClient {
 	labels := []string{"org/repo#1:lgtm"}
 	if hasLabel {
 		labels = append(labels, fmt.Sprintf("org/repo#%v:approved", prNumber))
@@ -155,6 +155,8 @@ func (fr fakeRepo) IsNoParentOwners(path string) bool {
 func TestHandle(t *testing.T) {
 	// This function does not need to test IsApproved, that is tested in approvers/approvers_test.go.
 
+	var githubLinkURL string = "https://github.com"
+
 	// includes tests with mixed case usernames
 	// includes tests with stale notifications
 	tests := []struct {
@@ -171,6 +173,7 @@ func TestHandle(t *testing.T) {
 		needsIssue          bool
 		lgtmActsAsApprove   bool
 		reviewActsAsApprove bool
+		githubLinkURL       string
 
 		expectDelete    bool
 		expectComment   bool
@@ -190,6 +193,7 @@ func TestHandle(t *testing.T) {
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  true,
@@ -222,6 +226,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  false,
@@ -258,6 +263,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          true,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  true,
@@ -293,6 +299,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          true,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  true,
@@ -330,6 +337,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          true,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:    false,
 			expectToggle:    true,
@@ -368,6 +376,7 @@ Approvers can cancel approval by writing `+"`/approve cancel`"+` in a comment
 			needsIssue:          true,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  false,
@@ -387,6 +396,7 @@ Approvers can cancel approval by writing `+"`/approve cancel`"+` in a comment
 			needsIssue:          true,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  true,
 			expectToggle:  true,
@@ -429,6 +439,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  true,
 			expectToggle:  true,
@@ -448,6 +459,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          true,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  true,
 			expectToggle:  true,
@@ -467,6 +479,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          true,
 			lgtmActsAsApprove:   true,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  true,
 			expectToggle:  true,
@@ -504,6 +517,7 @@ Approvers can cancel approval by writing `+"`/approve cancel`"+` in a comment
 			needsIssue:          true,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  false,
@@ -523,6 +537,7 @@ Approvers can cancel approval by writing `+"`/approve cancel`"+` in a comment
 			needsIssue:          true,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  true,
 			expectToggle:  true,
@@ -541,6 +556,7 @@ Approvers can cancel approval by writing `+"`/approve cancel`"+` in a comment
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  true,
 			expectToggle:  false,
@@ -579,6 +595,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   true,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  true,
 			expectToggle:  true,
@@ -618,6 +635,7 @@ Approvers can cancel approval by writing `+"`/approve cancel`"+` in a comment
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  false,
@@ -633,6 +651,7 @@ Approvers can cancel approval by writing `+"`/approve cancel`"+` in a comment
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  true,
@@ -665,6 +684,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  false,
@@ -701,6 +721,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: true,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  true,
@@ -737,6 +758,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: true,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  false,
@@ -778,6 +800,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: true,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  true,
 			expectToggle:  true,
@@ -819,6 +842,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: true,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  true,
 			expectToggle:  false,
@@ -856,6 +880,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: true,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  true,
 			expectToggle:  true,
@@ -894,6 +919,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: true,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  false,
@@ -930,6 +956,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: true,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  true,
@@ -963,6 +990,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			needsIssue:          false,
 			lgtmActsAsApprove:   false,
 			reviewActsAsApprove: false,
+			githubLinkURL:       githubLinkURL,
 
 			expectDelete:  false,
 			expectToggle:  true,
@@ -1007,7 +1035,7 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 	}
 
 	for _, test := range tests {
-		fghc := newFakeGithubClient(test.hasLabel, test.humanApproved, test.files, test.comments, test.reviews)
+		fghc := newFakeGitHubClient(test.hasLabel, test.humanApproved, test.files, test.comments, test.reviews)
 		branch := "master"
 		if test.branch != "" {
 			branch = test.branch
@@ -1019,6 +1047,11 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			logrus.WithField("plugin", "approve"),
 			fghc,
 			fr,
+			&plugins.Configuration{
+				GitHubOptions: plugins.GitHubOptions{
+					LinkURL: "https://github.com",
+				},
+			},
 			&plugins.Approve{
 				Repos:               []string{"org/repo"},
 				RequireSelfApproval: &rsa,
@@ -1265,7 +1298,7 @@ func TestHandleGenericComment(t *testing.T) {
 
 	var handled bool
 	var gotState *state
-	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, opts *plugins.Approve, pr *state) error {
+	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, config *plugins.Configuration, opts *plugins.Approve, pr *state) error {
 		gotState = pr
 		handled = true
 		return nil
@@ -1473,7 +1506,7 @@ func TestHandleReview(t *testing.T) {
 
 	var handled bool
 	var gotState *state
-	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, opts *plugins.Approve, pr *state) error {
+	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, config *plugins.Configuration, opts *plugins.Approve, pr *state) error {
 		gotState = pr
 		handled = true
 		return nil
@@ -1631,7 +1664,7 @@ func TestHandlePullRequest(t *testing.T) {
 
 	var handled bool
 	var gotState *state
-	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, opts *plugins.Approve, pr *state) error {
+	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, config *plugins.Configuration, opts *plugins.Approve, pr *state) error {
 		gotState = pr
 		handled = true
 		return nil

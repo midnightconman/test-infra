@@ -173,6 +173,7 @@ func handleGenericComment(log *logrus.Entry, ghc githubClient, oc ownersClient, 
 		log,
 		ghc,
 		repo,
+		config,
 		opts,
 		&state{
 			org:       ce.Repo.Owner.Login,
@@ -233,6 +234,7 @@ func handleReview(log *logrus.Entry, ghc githubClient, oc ownersClient, config *
 		log,
 		ghc,
 		repo,
+		config,
 		optionsForRepo(config, re.Repo.Owner.Login, re.Repo.Name),
 		&state{
 			org:       re.Repo.Owner.Login,
@@ -283,6 +285,7 @@ func handlePullRequest(log *logrus.Entry, ghc githubClient, oc ownersClient, con
 		log,
 		ghc,
 		repo,
+		config,
 		optionsForRepo(config, pre.Repo.Owner.Login, pre.Repo.Name),
 		&state{
 			org:       pre.Repo.Owner.Login,
@@ -326,7 +329,7 @@ func findAssociatedIssue(body string) int {
 // - Iff all files have been approved, the bot will add the "approved" label.
 // - Iff a cancel command is found, that reviewer will be removed from the approverSet
 // 	and the munger will remove the approved label if it has been applied
-func handle(log *logrus.Entry, ghc githubClient, repo approvers.Repo, opts *plugins.Approve, pr *state) error {
+func handle(log *logrus.Entry, ghc githubClient, repo approvers.Repo, config *plugins.Configuration, opts *plugins.Approve, pr *state) error {
 	fetchErr := func(context string, err error) error {
 		return fmt.Errorf("failed to get %s for %s/%s#%d: %v", context, pr.org, pr.repo, pr.number, err)
 	}
@@ -402,7 +405,7 @@ func handle(log *logrus.Entry, ghc githubClient, repo approvers.Repo, opts *plug
 
 	notifications := filterComments(commentsFromIssueComments, notificationMatcher(botName))
 	latestNotification := getLast(notifications)
-	newMessage := updateNotification(pr.org, pr.repo, pr.branch, latestNotification, approversHandler)
+	newMessage := updateNotification(config.GitHubOptions.LinkURL, pr.org, pr.repo, pr.branch, latestNotification, approversHandler)
 	if newMessage != nil {
 		for _, notif := range notifications {
 			if err := ghc.DeleteComment(pr.org, pr.repo, notif.ID); err != nil {
@@ -516,8 +519,8 @@ func notificationMatcher(botName string) func(*comment) bool {
 	}
 }
 
-func updateNotification(org, repo, branch string, latestNotification *comment, approversHandler approvers.Approvers) *string {
-	message := approvers.GetMessage(approversHandler, org, repo, branch)
+func updateNotification(linkURL, org, repo, branch string, latestNotification *comment, approversHandler approvers.Approvers) *string {
+	message := approvers.GetMessage(approversHandler, linkURL, org, repo, branch)
 	if message == nil || (latestNotification != nil && strings.Contains(latestNotification.Body, *message)) {
 		return nil
 	}
