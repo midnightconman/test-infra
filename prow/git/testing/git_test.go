@@ -18,13 +18,11 @@ package testing
 
 import (
 	"bytes"
-	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"testing"
 
-	"k8s.io/test-infra/prow/git"
 	"k8s.io/test-infra/prow/git/localgit"
 )
 

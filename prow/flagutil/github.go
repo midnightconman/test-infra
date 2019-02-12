@@ -108,9 +108,7 @@ func (o *GitHubOptions) GitHubClient(secretAgent *secret.Agent, dryRun bool) (cl
 
 // GitClient returns a Git client.
 func (o *GitHubOptions) GitClient(secretAgent *secret.Agent, dryRun bool) (client *git.Client, err error) {
-	// We already validated this during flag validation
-	gitURL, _ := url.Parse(o.GitEndpoint)
-	client, err = git.NewClient(gitURL)
+	client, err = git.NewClient()
 	if err != nil {
 		return nil, err
 	}
