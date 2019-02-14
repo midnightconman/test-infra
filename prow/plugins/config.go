@@ -19,7 +19,6 @@ package plugins
 import (
 	"errors"
 	"fmt"
-	"net/url"
 	"path"
 	"regexp"
 	"strings"
@@ -50,10 +49,6 @@ type Configuration struct {
 
 	// Owners contains configuration related to handling OWNERS files.
 	Owners Owners `json:"owners,omitempty"`
-
-	// GitHubOptions allows users to control how plugins interact with
-	// git, github, and github API's.
-	GitHubOptions GitHubOptions `json:"github,omitempty"`
 
 	// Built-in plugins specific configuration.
 	Approve                    []Approve              `json:"approve,omitempty"`
@@ -146,16 +141,6 @@ type Owners struct {
 	// OWNERS file, preventing their automatic addition by the owners-label plugin.
 	// This check is performed by the verify-owners plugin.
 	LabelsBlackList []string `json:"labels_blacklist,omitempty"`
-}
-
-type GitHubOptions struct {
-	// LinkURL allows users to override the default github link url for all plugins.
-	// If this option is not set, we use "https://github.com".
-	LinkURL string `json:"link_url,omitempty"`
-
-	// APILinkURL allows users to override the default github API link url for all plugins.
-	// If this option is not set, we use "https://api.github.com".
-	APILinkURL string `json:"api_link_url,omitempty"`
 }
 
 // MDYAMLEnabled returns a boolean denoting if the passed repo supports YAML OWNERS config headers
@@ -666,14 +651,6 @@ func (c *ConfigUpdater) SetDefaults() {
 func (c *Configuration) setDefaults() {
 	c.ConfigUpdater.SetDefaults()
 
-	if c.GitHubOptions.LinkURL == "" {
-		c.GitHubOptions.LinkURL = "https://github.com"
-	}
-
-	if c.GitHubOptions.APILinkURL == "" {
-		c.GitHubOptions.APILinkURL = "https://api.github.com"
-	}
-
 	for repo, plugins := range c.ExternalPlugins {
 		for i, p := range plugins {
 			if p.Endpoint != "" {
@@ -802,16 +779,6 @@ func validateExternalPlugins(pluginMap map[string][]ExternalPlugin) error {
 	return nil
 }
 
-func validateGitHubOptions(gho *GitHubOptions) error {
-	if _, err := url.Parse(gho.LinkURL); err != nil {
-		return fmt.Errorf("unable to parse github.link_url, might not be a valid url: %v", err)
-	}
-	if _, err := url.Parse(gho.APILinkURL); err != nil {
-		return fmt.Errorf("unable to parse github.api_link_url, might not be a valid url: %v", err)
-	}
-	return nil
-}
-
 func validateBlunderbuss(b *Blunderbuss) error {
 	if b.ReviewerCount != nil && b.FileWeightCount != nil {
 		return errors.New("cannot use both request_count and file_weight_count in blunderbuss")
@@ -913,9 +880,6 @@ func (c *Configuration) Validate() error {
 		return err
 	}
 	if err := validateExternalPlugins(c.ExternalPlugins); err != nil {
-		return err
-	}
-	if err := validateGitHubOptions(&c.GitHubOptions); err != nil {
 		return err
 	}
 	if err := validateBlunderbuss(&c.Blunderbuss); err != nil {
