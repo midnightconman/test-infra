@@ -21,6 +21,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -30,8 +31,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 )
-
-const github = "github.com"
 
 // Client can clone repos. It keeps a local cache, so successive clones of the
 // same repo should be quick. Create with NewClient. Be sure to clean it up.
@@ -52,7 +51,7 @@ type Client struct {
 	git string
 	// base is the base path for git clone calls. For users it will be set to
 	// GitHub, but for tests set it to a directory with git repos.
-	base string
+	base *url.URL
 
 	// The mutex protects repoLocks which protect individual repos. This is
 	// necessary because Clone calls for the same repo are racy. Rather than
@@ -71,7 +70,7 @@ var ioutilTempDir = ioutil.TempDir
 
 // NewClient returns a client that talks to GitHub. It will fail if git is not
 // in the PATH.
-func NewClient() (*Client, error) {
+func NewClient(base *url.URL) (*Client, error) {
 	g, err := exec.LookPath("git")
 	if err != nil {
 		return nil, err
@@ -84,7 +83,7 @@ func NewClient() (*Client, error) {
 		logger:    logrus.WithField("client", "git"),
 		dir:       t,
 		git:       g,
-		base:      fmt.Sprintf("https://%s", github),
+		base:      base,
 		repoLocks: make(map[string]*sync.Mutex),
 	}, nil
 }
@@ -92,7 +91,7 @@ func NewClient() (*Client, error) {
 // SetRemote sets the remote for the client. This is not thread-safe, and is
 // useful for testing. The client will clone from remote/org/repo, and Repo
 // objects spun out of the client will also hit that path.
-func (c *Client) SetRemote(remote string) {
+func (c *Client) SetRemote(remote *url.URL) {
 	c.base = remote
 }
 
@@ -109,6 +108,11 @@ func (c *Client) getCredentials() (string, string) {
 	c.credLock.RLock()
 	defer c.credLock.RUnlock()
 	return c.user, string(c.tokenGenerator())
+}
+
+// GetBase returns Client.base as a *url.URL
+func (c *Client) GetBase() *url.URL {
+	return c.base
 }
 
 func (c *Client) lockRepo(repo string) {
@@ -194,7 +198,7 @@ type Repo struct {
 	// git is the path to the git binary.
 	git string
 	// base is the base path for remote git fetch calls.
-	base string
+	base *url.URL
 	// repo is the full repo name: "org/repo".
 	repo string
 	// user is used for pushing to the remote repo.
@@ -298,7 +302,7 @@ func (r *Repo) Push(repo, branch string) error {
 // CheckoutPullRequest does exactly that.
 func (r *Repo) CheckoutPullRequest(number int) error {
 	r.logger.Infof("Fetching and checking out %s#%d.", r.repo, number)
-	if b, err := retryCmd(r.logger, r.Dir, r.git, "fetch", r.base+"/"+r.repo, fmt.Sprintf("pull/%d/head:pull%d", number, number)); err != nil {
+	if b, err := retryCmd(r.logger, r.Dir, r.git, "fetch", r.base.String()+"/"+r.repo, fmt.Sprintf("pull/%d/head:pull%d", number, number)); err != nil {
 		return fmt.Errorf("git fetch failed for PR %d: %v. output: %s", number, err, string(b))
 	}
 	if b, err := r.gitCommand("checkout", fmt.Sprintf("pull%d", number)); err != nil {
