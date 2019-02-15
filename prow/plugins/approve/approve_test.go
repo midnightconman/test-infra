@@ -1048,12 +1048,8 @@ Approvers can cancel approval by writing ` + "`/approve cancel`" + ` in a commen
 			logrus.WithField("plugin", "approve"),
 			fghc,
 			fr,
-			&config.Config{
-				ProwConfig: config.ProwConfig{
-					GitHubOptions: config.GitHubOptions{
-						LinkURL: "https://github.com",
-					},
-				},
+			config.GitHubOptions{
+				LinkURL: "https://github.com",
 			},
 			&plugins.Approve{
 				Repos:               []string{"org/repo"},
@@ -1301,7 +1297,7 @@ func TestHandleGenericComment(t *testing.T) {
 
 	var handled bool
 	var gotState *state
-	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, githubConfig *config.GitHubOptions, opts *plugins.Approve, pr *state) error {
+	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, githubConfig config.GitHubOptions, opts *plugins.Approve, pr *state) error {
 		gotState = pr
 		handled = true
 		return nil
@@ -1328,7 +1324,7 @@ func TestHandleGenericComment(t *testing.T) {
 
 	for _, test := range tests {
 		test.commentEvent.Repo = repo
-		githubConfig := &config.GitHubOptions{}
+		githubConfig := config.GitHubOptions{}
 		config := &plugins.Configuration{}
 		config.Approve = append(config.Approve, plugins.Approve{
 			Repos:             []string{test.commentEvent.Repo.Owner.Login},
@@ -1511,7 +1507,7 @@ func TestHandleReview(t *testing.T) {
 
 	var handled bool
 	var gotState *state
-	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, config *config.Config, opts *plugins.Approve, pr *state) error {
+	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, config config.GitHubOptions, opts *plugins.Approve, pr *state) error {
 		gotState = pr
 		handled = true
 		return nil
@@ -1543,7 +1539,7 @@ func TestHandleReview(t *testing.T) {
 	for _, test := range tests {
 		test.reviewEvent.Repo = repo
 		test.reviewEvent.PullRequest = pr
-		githubConfig := &config.GitHubOptions{}
+		githubConfig := config.GitHubOptions{}
 		config := &plugins.Configuration{}
 		irs := !test.reviewActsAsApprove
 		config.Approve = append(config.Approve, plugins.Approve{
@@ -1671,7 +1667,7 @@ func TestHandlePullRequest(t *testing.T) {
 
 	var handled bool
 	var gotState *state
-	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, githubConfig *config.GitHubOptions, opts *plugins.Approve, pr *state) error {
+	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, githubConfig config.GitHubOptions, opts *plugins.Approve, pr *state) error {
 		gotState = pr
 		handled = true
 		return nil
@@ -1694,7 +1690,7 @@ func TestHandlePullRequest(t *testing.T) {
 			logrus.WithField("plugin", "approve"),
 			fghc,
 			fakeOwnersClient{},
-			&config.Config{},
+			config.GitHubOptions{},
 			&plugins.Configuration{},
 			&test.prEvent,
 		)
