@@ -1301,7 +1301,7 @@ func TestHandleGenericComment(t *testing.T) {
 
 	var handled bool
 	var gotState *state
-	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, prowConfig *config.Config, opts *plugins.Approve, pr *state) error {
+	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, githubConfig *config.GitHubOptions, opts *plugins.Approve, pr *state) error {
 		gotState = pr
 		handled = true
 		return nil
@@ -1328,7 +1328,7 @@ func TestHandleGenericComment(t *testing.T) {
 
 	for _, test := range tests {
 		test.commentEvent.Repo = repo
-		prowConfig := &config.Config{}
+		githubConfig := &config.GitHubOptions{}
 		config := &plugins.Configuration{}
 		config.Approve = append(config.Approve, plugins.Approve{
 			Repos:             []string{test.commentEvent.Repo.Owner.Login},
@@ -1338,7 +1338,7 @@ func TestHandleGenericComment(t *testing.T) {
 			logrus.WithField("plugin", "approve"),
 			fghc,
 			fakeOwnersClient{},
-			prowConfig,
+			githubConfig,
 			config,
 			&test.commentEvent,
 		)
@@ -1543,7 +1543,7 @@ func TestHandleReview(t *testing.T) {
 	for _, test := range tests {
 		test.reviewEvent.Repo = repo
 		test.reviewEvent.PullRequest = pr
-		prowConfig := &config.Config{}
+		githubConfig := &config.GitHubOptions{}
 		config := &plugins.Configuration{}
 		irs := !test.reviewActsAsApprove
 		config.Approve = append(config.Approve, plugins.Approve{
@@ -1555,7 +1555,7 @@ func TestHandleReview(t *testing.T) {
 			logrus.WithField("plugin", "approve"),
 			fghc,
 			fakeOwnersClient{},
-			prowConfig,
+			githubConfig,
 			config,
 			&test.reviewEvent,
 		)
@@ -1671,7 +1671,7 @@ func TestHandlePullRequest(t *testing.T) {
 
 	var handled bool
 	var gotState *state
-	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, prowConfig *config.Config, opts *plugins.Approve, pr *state) error {
+	handleFunc = func(log *logrus.Entry, ghc githubClient, repo approvers.Repo, githubConfig *config.GitHubOptions, opts *plugins.Approve, pr *state) error {
 		gotState = pr
 		handled = true
 		return nil

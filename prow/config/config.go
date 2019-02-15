@@ -321,9 +321,7 @@ type GitHubOptions struct {
 	// If this option is not set, we use "https://github.com".
 	LinkURL string `json:"link_url,omitempty"`
 
-	// APILinkURL allows users to override the default github API link url for all plugins.
-	// If this option is not set, we use "https://api.github.com".
-	APILinkURL string `json:"api_link_url,omitempty"`
+	// TODO(midnightconman): add APILinkURL variable here.
 }
 
 // Load loads and parses the config at path.
@@ -943,17 +941,9 @@ func parseProwConfig(c *Config) error {
 
 	if c.GitHubOptions.LinkURL == "" {
 		c.GitHubOptions.LinkURL = "https://github.com"
-	} else {
-		if _, err := url.Parse(c.GitHubOptions.LinkURL); err != nil {
-			return fmt.Errorf("unable to parse github.link_url, might not be a valid url: %v", err)
-		}
 	}
-	if c.GitHubOptions.APILinkURL == "" {
-		c.GitHubOptions.APILinkURL = "https://api.github.com"
-	} else {
-		if _, err := url.Parse(c.GitHubOptions.APILinkURL); err != nil {
-			return fmt.Errorf("unable to parse github.api_link_url, might not be a valid url: %v", err)
-		}
+	if _, err := url.Parse(c.GitHubOptions.LinkURL); err != nil {
+		return fmt.Errorf("unable to parse github.link_url, might not be a valid url: %v", err)
 	}
 
 	if c.LogLevel == "" {
