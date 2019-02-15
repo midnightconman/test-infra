@@ -30,11 +30,10 @@ import (
 
 // GitHubOptions holds options for interacting with GitHub.
 type GitHubOptions struct {
-	Endpoint              Strings
-	GitEndpoint           string
-	GithubGraphQLEndpoint string
-	TokenPath             string
-	deprecatedTokenFile   string
+	endpoint            Strings
+	GitEndpoint         string
+	TokenPath           string
+	deprecatedTokenFile string
 }
 
 // AddFlags injects GitHub options into the given FlagSet.
@@ -50,10 +49,9 @@ func (o *GitHubOptions) AddFlagsWithoutDefaultGithubTokenPath(fs *flag.FlagSet) 
 }
 
 func (o *GitHubOptions) addFlags(wantDefaultGithubTokenPath bool, fs *flag.FlagSet) {
-	o.Endpoint = NewStrings("https://api.github.com")
-	fs.Var(&o.Endpoint, "github-endpoint", "GitHub's API endpoint (may differ for enterprise).")
+	o.endpoint = NewStrings("https://api.github.com")
+	fs.Var(&o.endpoint, "github-endpoint", "GitHub's API endpoint (may differ for enterprise).")
 	fs.StringVar(&o.GitEndpoint, "git-endpoint", "https://github.com", "GitHub endpoint (may differ for enterprise).")
-	fs.StringVar(&o.GithubGraphQLEndpoint, "github-graphql-endpoint", "https://api.github.com/graphql", "GitHub GraphQL API endpoint (may differ for enterprise).")
 	defaultGithubTokenPath := ""
 	if wantDefaultGithubTokenPath {
 		defaultGithubTokenPath = "/etc/github/oauth"
@@ -64,23 +62,23 @@ func (o *GitHubOptions) addFlags(wantDefaultGithubTokenPath bool, fs *flag.FlagS
 
 // Validate validates GitHub options.
 func (o *GitHubOptions) Validate(dryRun bool) error {
-	for _, uri := range o.Endpoint.Strings() {
+	for _, uri := range o.endpoint.Strings() {
 		if _, err := url.ParseRequestURI(uri); err != nil {
-			return fmt.Errorf("invalid -github-endpoint URI: %q", uri)
+			return fmt.Errorf("invalid --github-endpoint URI: %q", uri)
 		}
 	}
 
 	if _, err := url.ParseRequestURI(o.GitEndpoint); err != nil {
-		return fmt.Errorf("invalid -git-endpoint URI: %q", o.GitEndpoint)
+		return fmt.Errorf("invalid --git-endpoint URI: %q", o.GitEndpoint)
 	}
 
 	if o.deprecatedTokenFile != "" {
 		o.TokenPath = o.deprecatedTokenFile
-		logrus.Error("-github-token-file is deprecated and may be removed anytime after 2019-01-01.  Use -github-token-path instead.")
+		logrus.Error("--github-token-file is deprecated and may be removed anytime after 2019-01-01.  Use -github-token-path instead.")
 	}
 
 	if o.TokenPath == "" {
-		logrus.Warn("empty -github-token-path, will use anonymous github client")
+		logrus.Warn("empty --github-token-path, will use anonymous github client")
 	}
 
 	return nil
@@ -103,9 +101,9 @@ func (o *GitHubOptions) GitHubClient(secretAgent *secret.Agent, dryRun bool) (cl
 	}
 
 	if dryRun {
-		return github.NewDryRunClient(*generator, o.GithubGraphQLEndpoint, o.Endpoint.Strings()...), nil
+		return github.NewDryRunClient(*generator, o.endpoint.Strings()...), nil
 	}
-	return github.NewClient(*generator, o.GithubGraphQLEndpoint, o.Endpoint.Strings()...), nil
+	return github.NewClient(*generator, o.endpoint.Strings()...), nil
 }
 
 // GitClient returns a Git client.
