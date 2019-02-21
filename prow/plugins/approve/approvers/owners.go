@@ -435,7 +435,7 @@ func (ap Approvers) GetFiles(linkURL *url.URL, org, repo, branch string) []File 
 	for _, file := range ap.owners.GetOwnersSet().List() {
 		if len(filesApprovers[file]) == 0 {
 			allOwnersFiles = append(allOwnersFiles, UnapprovedFile{
-				linkURL:  linkURL.String(),
+				linkURL:  linkURL,
 				filepath: file,
 				org:      org,
 				repo:     repo,
@@ -443,7 +443,7 @@ func (ap Approvers) GetFiles(linkURL *url.URL, org, repo, branch string) []File 
 			})
 		} else {
 			allOwnersFiles = append(allOwnersFiles, ApprovedFile{
-				linkURL:   linkURL.String(),
+				linkURL:   linkURL,
 				filepath:  file,
 				approvers: filesApprovers[file],
 				org:       org,
@@ -543,7 +543,7 @@ type File interface {
 
 // ApprovedFile contains the information of a an approved file.
 type ApprovedFile struct {
-	linkURL  string
+	linkURL  *url.URL
 	filepath string
 	// approvers is the set of users that approved this file change.
 	approvers sets.String
@@ -554,7 +554,7 @@ type ApprovedFile struct {
 
 // UnapprovedFile contains the information of a an unapproved file.
 type UnapprovedFile struct {
-	linkURL  string
+	linkURL  *url.URL
 	filepath string
 	org      string
 	repo     string
@@ -567,7 +567,7 @@ func (a ApprovedFile) String() string {
 		fullOwnersPath = a.filepath
 	}
 	link := fmt.Sprintf("%s/%s/%s/blob/%s/%v",
-		a.linkURL,
+		a.linkURL.String(),
 		a.org,
 		a.repo,
 		a.branch,
@@ -582,7 +582,7 @@ func (ua UnapprovedFile) String() string {
 		fullOwnersPath = ua.filepath
 	}
 	link := fmt.Sprintf("%s/%s/%s/blob/%s/%v",
-		ua.linkURL,
+		ua.linkURL.String(),
 		ua.org,
 		ua.repo,
 		ua.branch,

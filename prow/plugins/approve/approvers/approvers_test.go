@@ -149,33 +149,33 @@ func TestGetFiles(t *testing.T) {
 			testName:          "Single Root File PR Approved",
 			filenames:         []string{"kubernetes.go"},
 			currentlyApproved: sets.NewString(rootApprovers.List()[0]),
-			expectedFiles:     []File{ApprovedFile{"https://github.com", "", sets.NewString(rootApprovers.List()[0]), "org", "repo", "master"}},
+			expectedFiles:     []File{ApprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "", sets.NewString(rootApprovers.List()[0]), "org", "repo", "master"}},
 		},
 		{
 			testName:          "Single File PR in B No One Approved",
 			filenames:         []string{"b/test.go"},
 			currentlyApproved: sets.NewString(),
-			expectedFiles:     []File{UnapprovedFile{"https://github.com", "b", "org", "repo", "master"}},
+			expectedFiles:     []File{UnapprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "b", "org", "repo", "master"}},
 		},
 		{
 			testName:          "Single File PR in B Fully Approved",
 			filenames:         []string{"b/test.go"},
 			currentlyApproved: bApprovers,
-			expectedFiles:     []File{ApprovedFile{"https://github.com", "b", bApprovers, "org", "repo", "master"}},
+			expectedFiles:     []File{ApprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "b", bApprovers, "org", "repo", "master"}},
 		},
 		{
 			testName:          "Single Root File PR No One Approved",
 			filenames:         []string{"kubernetes.go"},
 			currentlyApproved: sets.NewString(),
-			expectedFiles:     []File{UnapprovedFile{"https://github.com", "", "org", "repo", "master"}},
+			expectedFiles:     []File{UnapprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "", "org", "repo", "master"}},
 		},
 		{
 			testName:          "Combo and Other; Neither Approved",
 			filenames:         []string{"a/combo/test.go", "a/d/test.go"},
 			currentlyApproved: sets.NewString(),
 			expectedFiles: []File{
-				UnapprovedFile{"https://github.com", "a/combo", "org", "repo", "master"},
-				UnapprovedFile{"https://github.com", "a/d", "org", "repo", "master"},
+				UnapprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "a/combo", "org", "repo", "master"},
+				UnapprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "a/d", "org", "repo", "master"},
 			},
 		},
 		{
@@ -183,8 +183,8 @@ func TestGetFiles(t *testing.T) {
 			filenames:         []string{"a/combo/test.go", "a/d/test.go"},
 			currentlyApproved: eApprovers,
 			expectedFiles: []File{
-				ApprovedFile{"https://github.com", "a/combo", eApprovers, "org", "repo", "master"},
-				UnapprovedFile{"https://github.com", "a/d", "org", "repo", "master"},
+				ApprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "a/combo", eApprovers, "org", "repo", "master"},
+				UnapprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "a/d", "org", "repo", "master"},
 			},
 		},
 		{
@@ -192,8 +192,8 @@ func TestGetFiles(t *testing.T) {
 			filenames:         []string{"a/combo/test.go", "a/d/test.go"},
 			currentlyApproved: edcApprovers.Intersection(dApprovers),
 			expectedFiles: []File{
-				ApprovedFile{"https://github.com", "a/combo", edcApprovers.Intersection(dApprovers), "org", "repo", "master"},
-				ApprovedFile{"https://github.com", "a/d", edcApprovers.Intersection(dApprovers), "org", "repo", "master"},
+				ApprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "a/combo", edcApprovers.Intersection(dApprovers), "org", "repo", "master"},
+				ApprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "a/d", edcApprovers.Intersection(dApprovers), "org", "repo", "master"},
 			},
 		},
 		{
@@ -201,9 +201,9 @@ func TestGetFiles(t *testing.T) {
 			filenames:         []string{"a/combo/test.go", "a/d/test.go", "c/test"},
 			currentlyApproved: cApprovers,
 			expectedFiles: []File{
-				ApprovedFile{"https://github.com", "a/combo", cApprovers, "org", "repo", "master"},
-				UnapprovedFile{"https://github.com", "a/d", "org", "repo", "master"},
-				ApprovedFile{"https://github.com", "c", cApprovers, "org", "repo", "master"},
+				ApprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "a/combo", cApprovers, "org", "repo", "master"},
+				UnapprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "a/d", "org", "repo", "master"},
+				ApprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "c", cApprovers, "org", "repo", "master"},
 			},
 		},
 		{
@@ -211,8 +211,8 @@ func TestGetFiles(t *testing.T) {
 			filenames:         []string{"a/test.go", "a/d/test.go", "b/test"},
 			currentlyApproved: rootApprovers.Union(aApprovers).Union(bApprovers),
 			expectedFiles: []File{
-				ApprovedFile{"https://github.com", "a", rootApprovers.Union(aApprovers), "org", "repo", "master"},
-				ApprovedFile{"https://github.com", "b", rootApprovers.Union(bApprovers), "org", "repo", "master"},
+				ApprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "a", rootApprovers.Union(aApprovers), "org", "repo", "master"},
+				ApprovedFile{&url.URL{Scheme: "https", Host: "github.com"}, "b", rootApprovers.Union(bApprovers), "org", "repo", "master"},
 			},
 		},
 	}
