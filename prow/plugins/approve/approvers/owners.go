@@ -21,6 +21,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"net/url"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -428,13 +429,13 @@ func (ap Approvers) UnapprovedFiles() sets.String {
 }
 
 // GetFiles returns owners files that still need approval.
-func (ap Approvers) GetFiles(linkURL, org, repo, branch string) []File {
+func (ap Approvers) GetFiles(linkURL *url.URL, org, repo, branch string) []File {
 	allOwnersFiles := []File{}
 	filesApprovers := ap.GetFilesApprovers()
 	for _, file := range ap.owners.GetOwnersSet().List() {
 		if len(filesApprovers[file]) == 0 {
 			allOwnersFiles = append(allOwnersFiles, UnapprovedFile{
-				linkURL:  linkURL,
+				linkURL:  linkURL.String(),
 				filepath: file,
 				org:      org,
 				repo:     repo,
@@ -442,7 +443,7 @@ func (ap Approvers) GetFiles(linkURL, org, repo, branch string) []File {
 			})
 		} else {
 			allOwnersFiles = append(allOwnersFiles, ApprovedFile{
-				linkURL:   linkURL,
+				linkURL:   linkURL.String(),
 				filepath:  file,
 				approvers: filesApprovers[file],
 				org:       org,
@@ -609,7 +610,7 @@ func GenerateTemplate(templ, name string, data interface{}) (string, error) {
 // 	- a suggested list of people from each OWNERS files that can fully approve the PR
 // 	- how an approver can indicate their approval
 // 	- how an approver can cancel their approval
-func GetMessage(ap Approvers, linkURL, org, repo, branch string) *string {
+func GetMessage(ap Approvers, linkURL *url.URL, org, repo, branch string) *string {
 	message, err := GenerateTemplate(`{{if (and (not .ap.RequirementsMet) (call .ap.ManuallyApproved )) }}
 Approval requirements bypassed by manually added approval.
 
