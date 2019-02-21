@@ -18,6 +18,7 @@ package approve
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"sort"
 	"strconv"
@@ -523,7 +524,7 @@ func notificationMatcher(botName string) func(*comment) bool {
 	}
 }
 
-func updateNotification(linkURL, org, repo, branch string, latestNotification *comment, approversHandler approvers.Approvers) *string {
+func updateNotification(linkURL *url.URL, org, repo, branch string, latestNotification *comment, approversHandler approvers.Approvers) *string {
 	message := approvers.GetMessage(approversHandler, linkURL, org, repo, branch)
 	if message == nil || (latestNotification != nil && strings.Contains(latestNotification.Body, *message)) {
 		return nil
