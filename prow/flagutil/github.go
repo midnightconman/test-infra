@@ -22,17 +22,31 @@ import (
 	"net/url"
 
 	"github.com/sirupsen/logrus"
-
 	"k8s.io/test-infra/prow/config/secret"
 	"k8s.io/test-infra/prow/git"
 	"k8s.io/test-infra/prow/github"
 )
 
+const (
+	defaultAPIEndpoint = "https://api.github.com"
+	defaultGitEndpoint = "https://github.com"
+)
+
 // GitHubOptions holds options for interacting with GitHub.
 type GitHubOptions struct {
 	endpoint            Strings
+	gitEndpoint         URL
 	TokenPath           string
 	deprecatedTokenFile string
+}
+
+// NewGitHubOptions creates a new GitHup options instance with defaults.
+func NewGitHubOptions(tokenPath string) GitHubOptions {
+	return GitHubOptions{
+		endpoint:    NewStrings(defaultAPIEndpoint),
+		gitEndpoint: MustParseURL(defaultGitEndpoint),
+		TokenPath:   tokenPath,
+	}
 }
 
 // AddFlags injects GitHub options into the given FlagSet.
@@ -48,8 +62,10 @@ func (o *GitHubOptions) AddFlagsWithoutDefaultGithubTokenPath(fs *flag.FlagSet) 
 }
 
 func (o *GitHubOptions) addFlags(wantDefaultGithubTokenPath bool, fs *flag.FlagSet) {
-	o.endpoint = NewStrings("https://api.github.com")
+	o.endpoint = NewStrings(defaultAPIEndpoint)
 	fs.Var(&o.endpoint, "github-endpoint", "GitHub's API endpoint (may differ for enterprise).")
+	o.gitEndpoint = MustParseURL(defaultGitEndpoint)
+	fs.Var(&o.gitEndpoint, "git-endpoint", "Base url for git repositories (may differ for enterprise).")
 	defaultGithubTokenPath := ""
 	if wantDefaultGithubTokenPath {
 		defaultGithubTokenPath = "/etc/github/oauth"
@@ -62,24 +78,24 @@ func (o *GitHubOptions) addFlags(wantDefaultGithubTokenPath bool, fs *flag.FlagS
 func (o *GitHubOptions) Validate(dryRun bool) error {
 	for _, uri := range o.endpoint.Strings() {
 		if _, err := url.ParseRequestURI(uri); err != nil {
-			return fmt.Errorf("invalid -github-endpoint URI: %q", uri)
+			return fmt.Errorf("invalid --github-endpoint URI: %q", uri)
 		}
 	}
 
 	if o.deprecatedTokenFile != "" {
 		o.TokenPath = o.deprecatedTokenFile
-		logrus.Error("-github-token-file is deprecated and may be removed anytime after 2019-01-01.  Use -github-token-path instead.")
+		logrus.Error("--github-token-file is deprecated and may be removed anytime after 2019-01-01.  Use -github-token-path instead.")
 	}
 
 	if o.TokenPath == "" {
-		logrus.Warn("empty -github-token-path, will use anonymous github client")
+		logrus.Warn("empty --github-token-path, will use anonymous github client")
 	}
 
 	return nil
 }
 
-// GitHubClientWithLogFields returns a GitHub client with extra logging fields
-func (o *GitHubOptions) GitHubClientWithLogFields(secretAgent *secret.Agent, dryRun bool, fields logrus.Fields) (client *github.Client, err error) {
+// GitHubClient returns a GitHub client.
+func (o *GitHubOptions) GitHubClient(secretAgent *secret.Agent, dryRun bool) (client *github.Client, err error) {
 	var generator *func() []byte
 	if o.TokenPath == "" {
 		generatorFunc := func() []byte {
@@ -95,19 +111,14 @@ func (o *GitHubOptions) GitHubClientWithLogFields(secretAgent *secret.Agent, dry
 	}
 
 	if dryRun {
-		return github.NewDryRunClientWithFields(fields, *generator, o.endpoint.Strings()...), nil
+		return github.NewDryRunClient(*generator, o.endpoint.Strings()...), nil
 	}
-	return github.NewClientWithFields(fields, *generator, o.endpoint.Strings()...), nil
-}
-
-// GitHubClient returns a GitHub client.
-func (o *GitHubOptions) GitHubClient(secretAgent *secret.Agent, dryRun bool) (client *github.Client, err error) {
-	return o.GitHubClientWithLogFields(secretAgent, dryRun, logrus.Fields{})
+	return github.NewClient(*generator, o.endpoint.Strings()...), nil
 }
 
 // GitClient returns a Git client.
 func (o *GitHubOptions) GitClient(secretAgent *secret.Agent, dryRun bool) (client *git.Client, err error) {
-	client, err = git.NewClient()
+	client, err = git.NewClient(o.gitEndpoint.URL)
 	if err != nil {
 		return nil, err
 	}
