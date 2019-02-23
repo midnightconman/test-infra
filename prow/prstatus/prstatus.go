@@ -37,11 +37,10 @@ import (
 )
 
 const (
-	loginSession   = "github_login"
-	githubEndpoint = "https://api.github.com"
-	tokenSession   = "access-token-session"
-	tokenKey       = "access-token"
-	loginKey       = "login"
+	loginSession = "github_login"
+	tokenSession = "access-token-session"
+	tokenKey     = "access-token"
+	loginKey     = "login"
 )
 
 type githubClient interface {
@@ -75,6 +74,7 @@ type PullRequestWithContexts struct {
 type DashboardAgent struct {
 	repos []string
 	goac  *config.GithubOAuthConfig
+	gho   *config.GitHubOptions
 
 	log *logrus.Entry
 }
@@ -147,10 +147,11 @@ type searchQuery struct {
 }
 
 // NewDashboardAgent creates a new user dashboard agent .
-func NewDashboardAgent(repos []string, config *config.GithubOAuthConfig, log *logrus.Entry) *DashboardAgent {
+func NewDashboardAgent(repos []string, config *config.GithubOAuthConfig, gho *config.GitHubOptions, log *logrus.Entry) *DashboardAgent {
 	return &DashboardAgent{
 		repos: repos,
 		goac:  config,
+		gho:   gho,
 		log:   log,
 	}
 }
@@ -239,7 +240,7 @@ func (da *DashboardAgent) HandlePrStatus(queryHandler PullRequestQueryHandler) h
 			}
 
 			// Construct query
-			ghc := github.NewClient(func() []byte { return []byte(token.AccessToken) }, githubEndpoint)
+			ghc := github.NewClient(func() []byte { return []byte(token.AccessToken) }, da.gho.APIEndpoint.String())
 			query := da.ConstructSearchQuery(login)
 			if err := r.ParseForm(); err == nil {
 				if q := r.Form.Get("query"); q != "" {

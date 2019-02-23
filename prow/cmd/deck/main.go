@@ -39,7 +39,6 @@ import (
 	"github.com/gorilla/sessions"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/github"
 	"google.golang.org/api/option"
 	coreapi "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -328,6 +327,12 @@ func prodOnlyMain(cfg config.Getter, o options, mux *http.ServeMux) *http.ServeM
 		if err := yaml.Unmarshal(githubOAuthConfigRaw, &githubOAuthConfig); err != nil {
 			logrus.WithError(err).Fatal("Error unmarshalling github oauth config")
 		}
+		if githubOAuthConfig.AuthURL == "" {
+			githubOAuthConfig.AuthURL = "https://github.com/login/oauth/authorize"
+		}
+		if githubOAuthConfig.TokenURL == "" {
+			githubOAuthConfig.TokenURL = "https://github.com/login/oauth/access_token"
+		}
 		if !isValidatedGitOAuthConfig(&githubOAuthConfig) {
 			logrus.Fatal("Error invalid github oauth config")
 		}
@@ -348,7 +353,10 @@ func prodOnlyMain(cfg config.Getter, o options, mux *http.ServeMux) *http.ServeM
 			ClientSecret: githubOAuthConfig.ClientSecret,
 			RedirectURL:  githubOAuthConfig.RedirectURL,
 			Scopes:       githubOAuthConfig.Scopes,
-			Endpoint:     github.Endpoint,
+			Endpoint: oauth2.Endpoint{
+				AuthURL:  githubOAuthConfig.AuthURL,
+				TokenURL: githubOAuthConfig.TokenURL,
+			},
 		}
 
 		repoSet := make(map[string]bool)
@@ -370,6 +378,7 @@ func prodOnlyMain(cfg config.Getter, o options, mux *http.ServeMux) *http.ServeM
 		prStatusAgent := prstatus.NewDashboardAgent(
 			repos,
 			&githubOAuthConfig,
+			&cfg().GitHubOptions,
 			logrus.WithField("client", "pr-status"))
 
 		mux.Handle("/pr-data.js", handleNotCached(
@@ -1015,5 +1024,6 @@ func handleFavicon(staticFilesLocation string, cfg config.Getter) http.HandlerFu
 func isValidatedGitOAuthConfig(githubOAuthConfig *config.GithubOAuthConfig) bool {
 	return githubOAuthConfig.ClientID != "" && githubOAuthConfig.ClientSecret != "" &&
 		githubOAuthConfig.RedirectURL != "" &&
-		githubOAuthConfig.FinalRedirectURL != ""
+		githubOAuthConfig.FinalRedirectURL != "" && githubOAuthConfig.AuthURL != "" &&
+		githubOAuthConfig.TokenURL != ""
 }

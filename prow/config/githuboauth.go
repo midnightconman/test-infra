@@ -36,6 +36,8 @@ type GithubOAuthConfig struct {
 	RedirectURL      string   `json:"redirect_url"`
 	Scopes           []string `json:"scopes,omitempty"`
 	FinalRedirectURL string   `json:"final_redirect_url"`
+	AuthURL          string   `json:"auth_url,omitempty"`
+	TokenURL         string   `json:"token_url,omitempty"`
 
 	CookieStore *sessions.CookieStore `json:"-"`
 }
