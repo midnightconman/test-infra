@@ -41,10 +41,6 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"golang.org/x/oauth2"
-<<<<<<< HEAD
-=======
-	"golang.org/x/oauth2/github"
->>>>>>> Revert "Merge pull request #11000 from stevekuznetsov/skuznets/deck-client"
 	prowapi "k8s.io/test-infra/prow/apis/prowjobs/v1"
 	"k8s.io/test-infra/prow/config"
 	"k8s.io/test-infra/prow/deck/jobs"
