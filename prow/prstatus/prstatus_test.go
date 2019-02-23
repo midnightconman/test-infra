@@ -22,6 +22,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"testing"
 	"time"
@@ -77,10 +78,11 @@ func newMockQueryHandler(prs []PullRequest, contextMap map[int][]Context) *MockQ
 	}
 }
 
-func createMockAgent(repos []string, config *config.GithubOAuthConfig) *DashboardAgent {
+func createMockAgent(repos []string, config *config.GithubOAuthConfig, gho *config.GitHubOptions) *DashboardAgent {
 	return &DashboardAgent{
 		repos: repos,
 		goac:  config,
+		gho:   gho,
 		log:   logrus.WithField("unit-test", "dashboard-agent"),
 	}
 }
@@ -91,7 +93,10 @@ func TestHandlePrStatusWithoutLogin(t *testing.T) {
 	mockConfig := &config.GithubOAuthConfig{
 		CookieStore: mockCookieStore,
 	}
-	mockAgent := createMockAgent(repos, mockConfig)
+	mockGho := &config.GitHubOptions{
+		APIEndpoint: &url.URL{Scheme: "https", Host: "api.github.com"},
+	}
+	mockAgent := createMockAgent(repos, mockConfig, mockGho)
 	mockData := UserData{
 		Login: false,
 	}
@@ -127,7 +132,10 @@ func TestHandlePrStatusWithInvalidToken(t *testing.T) {
 	mockConfig := &config.GithubOAuthConfig{
 		CookieStore: mockCookieStore,
 	}
-	mockAgent := createMockAgent(repos, mockConfig)
+	mockGho := &config.GitHubOptions{
+		APIEndpoint: &url.URL{Scheme: "https", Host: "api.github.com"},
+	}
+	mockAgent := createMockAgent(repos, mockConfig, mockGho)
 	mockQueryHandler := newMockQueryHandler([]PullRequest{}, map[int][]Context{})
 
 	rr := httptest.NewRecorder()
@@ -163,7 +171,10 @@ func TestHandlePrStatusWithLogin(t *testing.T) {
 	mockConfig := &config.GithubOAuthConfig{
 		CookieStore: mockCookieStore,
 	}
-	mockAgent := createMockAgent(repos, mockConfig)
+	mockGho := &config.GitHubOptions{
+		APIEndpoint: &url.URL{Scheme: "https", Host: "api.github.com"},
+	}
+	mockAgent := createMockAgent(repos, mockConfig, mockGho)
 
 	testCases := []struct {
 		prs          []PullRequest
@@ -312,7 +323,10 @@ func TestGetHeadContexts(t *testing.T) {
 	mockConfig := &config.GithubOAuthConfig{
 		CookieStore: mockCookieStore,
 	}
-	mockAgent := createMockAgent(repos, mockConfig)
+	mockGho := &config.GitHubOptions{
+		APIEndpoint: &url.URL{Scheme: "https", Host: "api.github.com"},
+	}
+	mockAgent := createMockAgent(repos, mockConfig, mockGho)
 	testCases := []struct {
 		combinedStatus   *github.CombinedStatus
 		pr               PullRequest
@@ -384,7 +398,10 @@ func TestConstructSearchQuery(t *testing.T) {
 	mockConfig := &config.GithubOAuthConfig{
 		CookieStore: mockCookieStore,
 	}
-	mockAgent := createMockAgent(repos, mockConfig)
+	mockGho := &config.GitHubOptions{
+		APIEndpoint: &url.URL{Scheme: "https", Host: "api.github.com"},
+	}
+	mockAgent := createMockAgent(repos, mockConfig, mockGho)
 	query := mockAgent.ConstructSearchQuery("random_username")
 	mockQuery := "is:pr state:open author:random_username repo:\"mock/repo\" repo:\"kubernetes/test-infra\" repo:\"foo/bar\""
 	if query != mockQuery {

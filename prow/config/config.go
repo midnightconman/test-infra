@@ -343,6 +343,16 @@ type GitHubOptions struct {
 	// LinkURL is the url representation of LinkURLFromConfig. This variable should be used
 	// in all places internally.
 	LinkURL *url.URL
+
+	// APIEndpointFromConfig is the string representation of the api_endpoint config parameter.
+	// This config parameter allows users to set the GitHub API endpoint for applications
+	// and plugins.
+	// If this option is not set, we assume "https://api.github.com".
+	APIEndpointFromConfig string `json:"api_endpoint,omitempty"`
+
+	// APIEndpoint is the url representation of APIEndpointFromConfig. This variable should be used
+	// in all places internally.
+	APIEndpoint *url.URL
 }
 
 // Load loads and parses the config at path.
@@ -968,6 +978,15 @@ func parseProwConfig(c *Config) error {
 		return fmt.Errorf("unable to parse github.link_url, might not be a valid url: %v", err)
 	}
 	c.GitHubOptions.LinkURL = linkURL
+
+	if c.GitHubOptions.APIEndpointFromConfig == "" {
+		c.GitHubOptions.APIEndpointFromConfig = "https://api.github.com"
+	}
+	APIEndpoint, err := url.Parse(c.GitHubOptions.APIEndpointFromConfig)
+	if err != nil {
+		return fmt.Errorf("unable to parse github.api_endpoint, might not be a valid url: %v", err)
+	}
+	c.GitHubOptions.APIEndpoint = APIEndpoint
 
 	if c.LogLevel == "" {
 		c.LogLevel = "info"
